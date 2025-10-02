@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from .base import UnsupervisedDriftDetector
 
 
-class ClusteredStatisticalTestDriftDetectionMethod(UnsupervisedDriftDetector):
+class CSDDM(UnsupervisedDriftDetector):
     """
     Clustered Statistical Test Drift Detection Method (CSDDM) detects concept drifts by applying the Anderson-Darling
     k-sample test on clustered data. The reference data is used to create clusters, which the incoming recent data is
@@ -22,11 +22,12 @@ class ClusteredStatisticalTestDriftDetectionMethod(UnsupervisedDriftDetector):
 
     def __init__(
         self,
-        n_samples: int,
-        n_clusters: int,
+        n_samples: int = 50,
+        n_clusters: int = 5,
         confidence: float = 0.05,
         feature_proportion: float = 0.1,
         seed: Optional[int] = None,
+        recent_samples_size: int = 500
     ):
         """
         Init a new CSDDM drift detector.
@@ -37,7 +38,7 @@ class ClusteredStatisticalTestDriftDetectionMethod(UnsupervisedDriftDetector):
         :param feature_proportion: the proportion of features to keep after the PCA
         :param seed: the seed for the pseudo random number generator used in the PCA and the KMeans
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.n_samples = n_samples
         self.reference_data = []
         self.reference_clusters = None
@@ -51,21 +52,21 @@ class ClusteredStatisticalTestDriftDetectionMethod(UnsupervisedDriftDetector):
         self.confidence = confidence
         self._confidence_index = self._get_confidence_index()
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the drift detector with the given features and determine if a concept drift occurred.
 
-        :param features: the features
+        :param data: the features
         :return: True if a concept drift occurred, else False
         """
-        features = np.fromiter(features.values(), dtype=float)
+        data = np.fromiter(data.values(), dtype=float)
         if self.kmeans is None:
-            self.reference_data.append(features)
+            self.reference_data.append(data)
             if len(self.reference_data) == self.n_samples:
                 self.setup()
         else:
-            self.recent_data.append(features)
-            padded_features = features.reshape((1, *features.shape))
+            self.recent_data.append(data)
+            padded_features = data.reshape((1, *data.shape))
             self.recent_transformed_data.append(
                 self.pca.transform(padded_features).flatten()
             )
@@ -143,3 +144,6 @@ class ClusteredStatisticalTestDriftDetectionMethod(UnsupervisedDriftDetector):
         self.reference_data = self.pca.fit_transform(self.reference_data)
         self.kmeans = KMeans(n_clusters=self.n_clusters, random_state=self.seed)
         self.reference_clusters = self.kmeans.fit_predict(self.reference_data)
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

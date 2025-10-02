@@ -13,7 +13,7 @@ class RialtoBridgeTimelapse(base.FileDataset):
             n_samples=82_250,
             n_features=27,
             task=base.MULTI_CLF,
-            filename="rialto.csv",
+            filename="Rialto.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

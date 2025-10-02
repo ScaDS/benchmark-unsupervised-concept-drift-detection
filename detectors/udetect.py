@@ -18,17 +18,18 @@ class UDetect(UnsupervisedDriftDetector):
 
     def __init__(
         self,
-        n_windows: int,
-        n_samples: int = 200,
+        n_windows: int = 10,
+        n_samples: int = 50,
         disjoint_training_windows: bool = True,
         seed: int = None,
+        recent_samples_size: int = 500
     ):
         """
         Init a new UDetect instance
         :param n_windows: the number of windows used to initialize the change thresholds
         :param n_samples: the number of samples per window
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.n_windows = n_windows
         self.n_samples = n_samples
         self.data = deque(maxlen=n_samples)
@@ -38,14 +39,14 @@ class UDetect(UnsupervisedDriftDetector):
         self.upper_individual_limit = None
         self.lower_individual_limit = None
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the given features and detect if a concept drift occurred.
 
-        :param features: the features
+        :param data: the features
         :return: True if a drift occurred, else False
         """
-        self.data.append(np.fromiter(features.values(), dtype=float))
+        self.data.append(np.fromiter(data.values(), dtype=float))
         if len(self.data) == self.data.maxlen:
             if len(self.summaries) < self.n_windows:
                 summary = self._calculate_window_summary()
@@ -104,3 +105,6 @@ class UDetect(UnsupervisedDriftDetector):
         self.upper_individual_limit = None
         self.lower_individual_limit = None
         self.data = deque(maxlen=self.n_samples)
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

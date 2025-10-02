@@ -8,6 +8,8 @@ from sklearn.cluster import KMeans
 
 from .base import UnsupervisedDriftDetector
 
+from optimization.classifiers import Classifiers  
+
 
 class UCDD(UnsupervisedDriftDetector):
     """
@@ -28,6 +30,7 @@ class UCDD(UnsupervisedDriftDetector):
         threshold: float = 0.05,
         stability_offset: float = 1e-9,
         seed: Optional[int] = None,
+        recent_samples_size: int = 500
     ):
         """
         Init a new UCDD instance.
@@ -36,21 +39,21 @@ class UCDD(UnsupervisedDriftDetector):
         :param n_recent_samples: the number of samples stored in the recent data window
         :param threshold: the threshold for concept drift detection
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.window = deque(maxlen=n_recent_samples + n_reference_samples)
         self.n_reference_samples = n_reference_samples
         self.threshold = threshold
         self.stability_offset = stability_offset
         self.kmeans = KMeans(n_clusters=2, random_state=self.seed)
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the given features.
 
-        :param features: the features
+        :param data: the features
         :return: True if a drift occurred, else False
         """
-        self.window.append(np.fromiter(features.values(), dtype=float))
+        self.window.append(np.fromiter(data.values(), dtype=float))
         if len(self.window) == self.window.maxlen:
             kmeans = self.kmeans.fit(self.window)
             (
@@ -124,3 +127,6 @@ class UCDD(UnsupervisedDriftDetector):
         recent_positive = data[self.n_reference_samples:][recent_labels == 0]
         recent_negative = data[self.n_reference_samples:][recent_labels == 1]
         return reference_positive, reference_negative, recent_positive, recent_negative
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

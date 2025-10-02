@@ -68,7 +68,7 @@ class ModelOptimizer:
                         drifts.append(i)
                         self.classifiers.reset()
                         train_steps = 0
-                    self.classifiers.fit(x, y, nonadaptive=i < n_training_samples)
+                    self.classifiers.fit(x, y)
                     train_steps += 1
                 metrics = get_metrics(stream, drifts, labels, predictions)
                 logger.log(config, metrics, drifts)

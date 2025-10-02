@@ -7,7 +7,7 @@ from sklearn.svm import OneClassSVM
 from .base import UnsupervisedDriftDetector
 
 
-class OneClassDriftDetector(UnsupervisedDriftDetector):
+class OCDD(UnsupervisedDriftDetector):
     """
     One-Class Drift Detector (OCDD) detects concept drifts by monitoring an outlier detector. If the rate of recent
     outliers exceeds a pre-determined threshold, a drift is signalled. Furthermore, the outlier detector is re-fitted
@@ -18,12 +18,13 @@ class OneClassDriftDetector(UnsupervisedDriftDetector):
     """
 
     def __init__(
-        self,
-        n_samples: int = 100,
-        threshold: float = 0.3,
-        outlier_detector_class: callable = OneClassSVM,
-        outlier_detector_kwargs: dict = None,
-        seed: Optional[int] = None,
+            self,
+            n_samples: int = 100,
+            threshold: float = 0.3,
+            outlier_detector_class: callable = OneClassSVM,
+            outlier_detector_kwargs: dict = None,
+            seed: Optional[int] = None,
+            recent_samples_size: int = 500
     ):
         """
         Init a new OCDD instance.
@@ -33,7 +34,7 @@ class OneClassDriftDetector(UnsupervisedDriftDetector):
         :param outlier_detector_class: the init method of an outlier detector
         :param outlier_detector_kwargs: the key word arguments used to initialize the outlier detector
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         if outlier_detector_kwargs is None:
             outlier_detector_kwargs = {}
         self.n_samples = n_samples
@@ -44,19 +45,19 @@ class OneClassDriftDetector(UnsupervisedDriftDetector):
         self.outlier_detector_class = outlier_detector_class
         self.outlier_detector_kwargs = outlier_detector_kwargs
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the given features.
 
-        :param features: the features
+        :param data: the features
         :return: True if a drift occurred, else False
         """
-        features = np.fromiter(features.values(), dtype=float)
-        self.data.append(features)
+        data = np.fromiter(data.values(), dtype=float)
+        self.data.append(data)
         if len(self.data) == self.n_samples and self.outlier_detector is None:
             self.setup()
         if self.outlier_detector is not None:
-            outlier = self.outlier_detector.predict([features])
+            outlier = self.outlier_detector.predict([data])
             self.outliers.append(outlier)
             if len(self.data) == self.n_samples and self._detect_drift():
                 self.reset()
@@ -94,5 +95,8 @@ class OneClassDriftDetector(UnsupervisedDriftDetector):
             self.outlier_detector = self.outlier_detector_class(
                 **self.outlier_detector_kwargs
             )
-        self.outlier_detector.fit(self.data)
+        self.outlier_detector.fit(self.data, )
         self.data = deque(maxlen=self.n_samples)
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

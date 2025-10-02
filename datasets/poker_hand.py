@@ -13,7 +13,7 @@ class PokerHand(base.FileDataset):
             n_samples=829_201,
             n_features=10,
             task=base.MULTI_CLF,
-            filename="poker-lsn.csv",
+            filename="PokerHand.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

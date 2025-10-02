@@ -13,7 +13,7 @@ class ForestCovertype(base.FileDataset):
             n_samples=581_012,
             n_features=54,
             task=base.MULTI_CLF,
-            filename="covtype.csv",
+            filename="ForestCoverType.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

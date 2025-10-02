@@ -1,79 +1,314 @@
-# A benchmark and survey of fully unsupervised concept drift detectors on real-world data streams
+# Computational Performance of Semi- and Unsupervised Concept Drift Detection: A Survey and Multiobjective Benchmark using Bayesian Optimization
 
-## Abstract
-Fully unsupervised concept drift detectors detected substantial changes in the patterns encoded in data streams by
-observing the feature space only.
-If left unaddressed, these changes could render other models deployed on the data stream unreliable.
-This repository contains multiple fully unsupervised concept drift detectors, a workflow to test various
-configurations of these detectors on real-world data streams from the literature and the raw results from our 
-experiments.
-The results of this study are fully reproducible with this repository, following the steps outlined
-below.
+A comprehensive benchmark suite for evaluating drift detection algorithms on data streams using multi-objective Bayesian optimization.
 
-The implemented concept drift detectors are:
-- Bayesian Non-parametric Detection Method (BNDM) [[doi]](https://doi.org/10.1145/3420034)
-- Clustered Statistical test Drift Detection Method (CSDDM) [[url]](https://jit.ndhu.edu.tw/article/view/2504)
-- Discriminative Drift Detector (D3) [[doi]](https://doi.org/10.1145/3357384.3358144)
-- Ensemble Drift detection with Feature Subspaces (EDFS) [[doi]](https://doi.org/10.1109/DSAA.2019.00047)
-- Image-Based Drift Detector (IBDD) [[doi]](https://doi.org/10.1109/BigData50022.2020.9377880)
-- Nearest Neighbor-based Density Variation Identification (NN-DVI) [[doi]](https://doi.org/10.1016/j.patcog.2017.11.009)
-- One-Class Drift Detector (OCDD) [[doi]](https://doi.org/10.1145/3357384.3358144)
-- Semi-Parametric Log Likelihood (SPLL) [[doi]](https://doi.org/10.1109/TKDE.2011.226)
-- Unsupervised Concept Drift Detection (UCDD) [[doi]](https://doi.org/10.1142/9789811223334_0017)
-- Unsupervised Change Detection for Activity Recognition (UDetect) [[doi]](https://doi.org/10.1108/IJPCC-03-2017-0027)
+## Related Work
 
-Experiment results show that you should use:
-- CSDDM, D3 and SPLL according to lift-per-drift
-- IBDD and many of the other detectors according to accuracy, depending on the data stream
-- D3 and SPLL according to MTR
-Each detector's corresponding publication is listed in the respective detector's file, found in the folder `detectors`.
+This benchmark builds upon the initial work on unsupervised concept drift detection:
+- **Original Repository**: [DFKI-NI/unsupervised-concept-drift-detection](https://github.com/DFKI-NI/unsupervised-concept-drift-detection)
 
-The corresponding paper is published in [The International Journal of Data Science and Analytics](https://link.springer.com/article/10.1007/s41060-024-00620-y). 
-If you use components from this repository, please cite this work as:
+## Overview
+
+This benchmark suite provides a systematic framework for evaluating and comparing drift detection algorithms across multiple dimensions:
+
+- **Multi-objective optimization** using Bayesian optimization (via OmniOpt)
+- **20 drift detectors** including both supervised and unsupervised methods
+- **Real-world and synthetic datasets** for comprehensive evaluation
+- **Multiple performance metrics**: Accuracy, Runtime, Requested Labels, Mean Time Ratio (MTR)
+- **Automated hyperparameter tuning** for fair comparison
+- **Scalable execution** on both HPC clusters (SLURM) and local machines
+
+### Key Features
+
+- **Currently implemented detectors**: CSDDM, BNDM, D3, IBDD, OCDD, SPLL, UDetect, EDFS, NNDVI, UCDD, STUDD, DDAL, DAWIDD, IKS, HDDDM, PCACD, CDBD, SlidShaps, WindowKDE, CDLEEDS
+
+- **Multi-Objective Optimization**: Simultaneously optimize for accuracy, runtime, label efficiency, MTR or others
+
+- **Feature Testing Mode**: Single-variate detector evaluation
+
+## Repository Structure
+
 ```
-@article{lukats2024,
-	title = {A benchmark and survey of fully unsupervised concept drift detectors on real-world data streams},
-	issn = {2364-4168},
-	doi = {10.1007/s41060-024-00620-y},
-	journal = {International Journal of Data Science and Analytics},
-	author = {Lukats, Daniel and Zielinski, Oliver and Hahn, Axel and Stahl, Frederic},
-	month = aug,
-	year = {2024},
-}
+benchmarkdd/
+├── datasets/                    # Dataset definitions and loaders
+│   ├── files.tar.gz            # CSV data files to unpack
+│   └── *.py                    # Dataset classes (electricity.py, etc.)
+│
+├── detectors/                   # Drift detector implementations
+│   ├── base.py                 # Base detector class
+│   └── *.py                    # Individual detectors (csddm.py, etc.)
+│
+├── metrics/                      # Performance metrics
+│   ├── drift.py                 # Drift detection metrics
+│   ├── computational_metrics.py # Runtime and memory metrics
+│   └── lift_per_drift.py        # Lift per drift calculation
+│
+├── evaluation_notebooks/        # Analysis and visualization notebooks
+│   ├── evaluation_unified.ipynb        # Experiment status and data loading
+│   ├── evaluation_visualization.ipynb  # Performance visualization
+│   ├── prediction_analysis.ipynb       # Prediction pattern analysis
+│   ├── evaluation_radar_graphs.ipynb   # Multi-dimensional comparison
+│   └── eval_config.py                  # Shared configuration
+│
+├── model/                       # Pre-trained classifier models
+│   └── HoeffdingTreeClassifier/ # Hoeffding Tree models
+│
+├── results/                     # Experiment results
+│   ├── baselines/              # Baseline results
+│   └── omniopt_results/        # OmniOpt optimization results
+│
+├── runs/                        # Active experiment runs (created by OmniOpt)
+│   └── [detector]_[dataset]_[classifier]_[metrics]/
+│
+├── test/                        # Unit and integration tests
+│
+├── main.py                      # Main experiment runner
+├── train_classifiers.py         # Classifier training
+├── compute_baselines.py         # Baseline computation
+├── config.py                    # Global configuration
+├── requirements.txt             # Python dependencies
+│
+├── run_stream_detector_optimization.sh     # Main benchmark script
+├── run_stream_detector_optimization.sbatch # SLURM batch script
+├── run_train_classifiers.sh              # Classifier training script
+├── run_baselines.sh                      # Baseline computation script
+└── benchmark_config.sh                   # Benchmark configuration
 ```
-If you use a concept drift detector, please cite the corresponding publication of the respective authors as well.
 
-## Install
-To install the required dependencies and data sets, follow these steps.
-This study is implemented in `Python 3.8`.
-If you do not intend to reproduce any experiments, you may skip steps 2 and 3.
-1. Install dependencies, e.g., `pip install -r requirements.txt`
-2. Download the data sets from the [USP DS Repository](https://sites.google.com/view/uspdsrepository) and extract them in `datasets/files`. Note that the archive is encrypted. Souza et al. provide the password in the corresponding publication titled _Challenges in Benchmarking Stream Learning Algorithms with Real-world Data_ [[doi]](https://doi.org/10.1007/s10618-020-00698-5).
-3. Verify that the data sets are located in `datasets/files`, e.g., `datasets/files/outdoor.arff`.
-4. Execute `python convert_datasets.py` to convert the data sets to CSV and convert the class labels to pandas-readable characters.
-5. Test by executing `python -m unittest discover -s test -t .`.
+## Getting Started
 
-## Execute
-If you wish to reproduce our experiments, follow all installation steps above. 
-Then, execute `python main.py <your_experiment_name>`. 
-The results will be saved in `results/<data stream>/<detector>_<your_experiment_name>.csv`.
-You may provide the number of threads to use by setting `OMP_NUM_THREADS`: `OMP_NUM_THREADS=8 python main.py full-test`.
-`config.py` contains the full configuration used in our experiments.
-Note that repeating all experiments may take several months, depending on your hardware.
+### Prerequisites
 
-If you want to create the results data the figures and tables are based on, execute `python eval.py`.
-Several directories labeled `results_best`, `results_summarized` etc. will be created and filled with data.
-They provide the following content in order of creation by `eval.py`:
-- `results` contains the raw experiment logs (not created during evaluation)
-- `results_no_detections` contains all configurations that failed to detect any concept drift
-- `results_periodic` contains all configurations that detected periodic, i.e., every _n_ time steps
-- `results_figures` contains all figures as .eps files. If you wish to view the figures directly, set `show=True` at the top of `eval.py`.
-- `results_clean` contains filtered experiment results, that contain no lines featuring periodic detection or no detection at all
-- `results_summarized` contains aggregated experiment results containing the mean and std of all recorded metrics (based on clean results)
-- `results_best` contains the peak results in terms of accuracy and lift-per-drift for each detector (based on summarized results)
+- Python 3.8+
+- Required packages (see `requirements.txt`)
+- SLURM based scheduler for HPC execution
 
-## Funding
-This study was conducted in the project _Change Event based Sensor Sampling (ChESS)_ at the department for Marine Perception
-at the German Research Center for Artificial Intelligence. ChESS was funded by the Volkswagen Stiftung (Volkswagen
-Foundation) and Niedersächsisches Ministerium für Wissenschaft und Kultur (Lower Saxony's Ministry for Science and
-Culture) under Niedersächsisches Vorab (grant number ZN3683).
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd benchmarkdd
+```
+
+2. **Install dependencies**
+```bash
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install required packages
+pip install -r requirements.txt
+```
+
+3. **Prepare datasets**
+```bash
+# Datasets are included in datasets
+tar -xvzf files.tar.gz
+# Or download additional datasets if needed
+```
+
+4. **Train classifiers** (optional, pre-trained models included)
+```bash
+# On local machine
+./run_train_classifiers.sh
+
+# On HPC cluster
+sbatch run_train_classifiers.sbatch
+```
+
+## Running the Benchmark
+
+### Direct Execution (Without OmniOpt)
+
+You can run a specific detector with a specific configuration directly using `main.py`, without the hyperparameter optimization:
+
+**Standard Mode (ACCURACY-RUNTIME-REQLABELS):**
+```bash
+python main.py <Accuracy> <Runtime> <ReqLabels> <Dataset> <TrainSamples> <Classifier> <Detector> [params...]
+```
+
+**MTR Mode (RUNTIME-MTR):**
+```bash
+python main.py <Runtime> <MTR> <Dataset> <TrainSamples> <Classifier> <Detector> [params...]
+```
+
+**Arguments:**
+- `Accuracy/Runtime/ReqLabels/MTR` - Boolean flags (True/False/1/0) for which metrics to optimize
+- `Dataset` - Dataset name (e.g., 'Electricity', 'NOAAWeather')
+- `TrainSamples` - Number of training samples (typically 2000)
+- `Classifier` - Classifier name (e.g., 'HoeffdingTreeClassifier')
+- `Detector` - Drift detector name (e.g., 'CSDDM', 'BNDM')
+- `params` - Detector-specific parameters as key-value pairs
+
+**Examples:**
+
+```bash
+# Run CSDDM on Electricity dataset, optimize for accuracy and runtime
+python main.py True True False Electricity 1600 HoeffdingTreeClassifier CSDDM recent_samples_size 1000 n_samples 500 confidence 0.05 feature_proportion 0.5 n_clusters 5
+```
+
+
+### Automated Optimization with OmniOpt
+
+For automated hyperparameter optimization across multiple configurations:
+
+#### Configuration
+
+Edit `run_stream_detector_optimization.sh` to configure your experiments:
+
+```bash
+# Select evaluation mode
+MTR_MODE=false              # Set to true for MTR evaluation
+FEATURE_TEST_MODE=false     # Set to true for feature testing
+
+# Configure detector-dataset combinations
+streamdds["Electricity"]="CSDDM BNDM D3"
+streamdds["NOAAWeather"]="CSDDM BNDM"
+# Add more combinations as needed
+```
+
+### Running on Local Machine
+
+The script automatically detects local execution and adjusts accordingly:
+
+```bash
+# Run benchmark
+./run_stream_detector_optimization.sh
+```
+
+**Example: ACCURACY-RUNTIME-REQLABELS**
+```bash
+# Edit run_stream_detector_optimization.sh
+MTR_MODE=false
+FEATURE_TEST_MODE=false
+
+# Configure detectors and datasets
+streamdds["Electricity"]="CSDDM BNDM D3 IBDD"
+streamdds["NOAAWeather"]="CSDDM BNDM"
+
+# Run
+./run_stream_detector_optimization.sh
+```
+
+**Example: MTR (Mean Time Ratio)**
+```bash
+# Edit run_stream_detector_optimization.sh
+MTR_MODE=true
+FEATURE_TEST_MODE=false
+
+# Configure synthetic datasets
+streamdds["SineClustersPre"]="CSDDM BNDM D3"
+streamdds["WaveformPre"]="CSDDM BNDM"
+
+# Run
+./run_stream_detector_optimization.sh
+```
+
+**Example: Feature Testing Mode (single variate detectors)**
+```bash
+# Edit run_stream_detector_optimization.sh
+MTR_MODE=false
+FEATURE_TEST_MODE=true
+
+# Configure single-variate detectors
+streamdds["Electricity"]="CDBD IKS WindowKDE"
+
+# Run
+./run_stream_detector_optimization.sh
+```
+
+### Running on HPC Cluster (SLURM)
+
+The script automatically detects SLURM and uses appropriate commands:
+
+```bash
+# Submit batch job
+sbatch run_stream_detector_optimization.sbatch
+
+# Or run interactively in a job allocation
+./run_stream_detector_optimization.sh
+```
+
+### Advanced Configuration
+
+**Adjust OmniOpt parameters:**
+```bash
+# In run_stream_detector_optimization.sh, modify OmniOpt parameters:
+--max_eval=50000              # Maximum evaluations
+--num_parallel_jobs=30        # Parallel jobs
+--worker_timeout=240          # Timeout per evaluation (minutes)
+--mem_gb=64                   # Memory per job (GB)
+--time=10080                  # Total time limit (minutes)
+```
+
+Please check the OmniOpt documentation for further details:
+https://imageseg.scads.de/omniax/tutorials
+
+
+## Analyzing Results
+
+### Using Jupyter Notebooks
+
+Navigate to `evaluation_notebooks/` for comprehensive analysis:
+
+```bash
+cd evaluation_notebooks
+jupyter notebook
+```
+
+**Available notebooks:**
+
+1. **`evaluation_unified.ipynb`** - Experiment status and completion
+   - Check which experiments have completed
+   - Identify missing or incomplete runs
+   - View completion statistics
+
+2. **`evaluation_visualization.ipynb`** - Performance visualization
+   - Pareto front analysis
+   - Performance heatmaps
+   - Best configuration identification
+   - Export results to CSV
+
+3. **`prediction_analysis.ipynb`** - Prediction pattern analysis
+   - Time-series visualization of predictions
+   - Ensemble analysis
+   - Minimal detector set identification
+
+## Performance Metrics
+
+The benchmark evaluates detectors across multiple dimensions:
+
+### Standard Metrics
+- **Accuracy**: Classification accuracy with drift detection
+- **Runtime**: Total execution time (seconds)
+- **Requested Labels**: Number of labels requested (for semi-supervised methods)
+- **Memory**: Peak and mean memory usage (MB)
+
+### MTR Metrics (Synthetic Datasets)
+- **Mean Time Ratio (MTR)**: Ratio of time to recover from drift
+- **Runtime**: Execution time
+- **Accuracy**: Overall classification accuracy
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Acknowledgments
+
+- Original unsupervised drift detection work: [DFKI-NI/unsupervised-concept-drift-detection](https://github.com/DFKI-NI/unsupervised-concept-drift-detection)
+- OmniOpt framework for Bayesian optimization
+- River library for online machine learning
+- All contributors and researchers in the drift detection community
+
+## Contact
+
+For questions, issues, or collaboration:
+- Open an issue on GitHub
+- Contact: [elias.werner@tu-dresden.de]

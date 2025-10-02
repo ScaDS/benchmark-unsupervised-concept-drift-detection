@@ -13,7 +13,7 @@ class SensorStream(base.FileDataset):
             n_samples=2_219_803,
             n_features=5,
             task=base.MULTI_CLF,
-            filename="sensorstream.csv",
+            filename="SensorStream.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

@@ -1,24 +1,30 @@
+import river.base
 from river.naive_bayes import GaussianNB
 from river.tree import HoeffdingTreeClassifier
 
 
 class Classifiers:
     """
-    Classifiers provides an interface to operate two HoeffdingTreeClassifiers and two GaussianNBs for a concept drift
-    detector. One of each is assisted by the concept drift detector, whereas the remaining classifiers operate
-    independently.
+    Classifiers provides an interface to operate two HoeffdingTreeClassifiers
+    and two GaussianNBs for a concept drift detector.
     """
 
-    def __init__(self):
+    def __init__(self, clf_str):
         """
         Init two HoeffdingTreeClassifiers and two GaussianNBs.
         """
-        self.base_hoeffding_tree = HoeffdingTreeClassifier()
-        self.base_gaussian_nb = GaussianNB()
-        self.assisted_hoeffding_tree = HoeffdingTreeClassifier()
-        self.assisted_gaussian_nb = GaussianNB()
+        self.clf_str = clf_str
+        self.clf = None
+        self.init_clf()
+
         self.nonadaptive_trains = 0
         self.adaptive_trains = 0
+
+    def init_clf(self):
+        if self.clf_str == "HT":
+            self.clf = HoeffdingTreeClassifier()
+        elif self.clf_str == "GN":
+            self.clf = GaussianNB()
 
     def predict(self, x):
         """
@@ -27,15 +33,19 @@ class Classifiers:
         :param x: the features
         :return: the label
         """
-        predictions = (
-            self.base_hoeffding_tree.predict_one(x),
-            self.base_gaussian_nb.predict_one(x),
-            self.assisted_hoeffding_tree.predict_one(x),
-            self.assisted_gaussian_nb.predict_one(x),
-        )
-        return predictions
 
-    def fit(self, x, y, nonadaptive):
+        return self.clf.predict_one(x)
+
+    def predict_proba(self, x):
+        """
+        Predict the label of the features x.
+
+        :param x: the features
+        :return: the label
+        """
+        return self.clf.predict_proba_one(x)
+
+    def fit(self, x, y):
         """
         Fit the classifiers on the training data consisting of x and y. If nonadaptive is True, the base classifiers are
         trained as well.
@@ -44,17 +54,15 @@ class Classifiers:
         :param y: the label
         :param nonadaptive: True if base classifiers shall be trained as well, else False
         """
-        if nonadaptive:
-            self.base_hoeffding_tree.learn_one(x, y)
-            self.base_gaussian_nb.learn_one(x, y)
-            self.nonadaptive_trains += 1
-        self.adaptive_trains += 1
-        self.assisted_hoeffding_tree.learn_one(x, y)
-        self.assisted_gaussian_nb.learn_one(x, y)
+        self.clf.learn_one(x, y)
 
     def reset(self):
         """
         Reset the classifiers assisted by concept drift detectors.
         """
-        self.assisted_hoeffding_tree = HoeffdingTreeClassifier()
-        self.assisted_gaussian_nb = GaussianNB()
+        self.init_clf()
+
+    def clone(self):
+        clf_clone = Classifiers(self.clf_str)
+        clf_clone.clf = self.clf.clone()
+        return clf_clone

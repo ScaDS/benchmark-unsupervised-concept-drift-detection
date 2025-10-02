@@ -13,12 +13,15 @@ class Electricity(base.FileDataset):
             n_samples=45_312,
             n_features=8,
             task=base.MULTI_CLF,
-            filename="elec.arff",
+            filename="Electricity.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 
     def __iter__(self):
-        return stream.iter_arff(
+        converters = {f"attribute{i}": float for i in range(1, 9)}
+        converters["class"] = int
+        return stream.iter_csv(
             self.full_path,
             target="class",
+            converters=converters,
         )

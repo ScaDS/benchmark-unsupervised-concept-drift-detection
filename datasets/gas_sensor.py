@@ -13,7 +13,7 @@ class GasSensor(base.FileDataset):
             n_samples=13_910,
             n_features=128,
             task=base.MULTI_CLF,
-            filename="gassensor.csv",
+            filename="GasSensorArray.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

@@ -5,6 +5,8 @@ import numpy as np
 from scipy.stats import norm
 from sklearn.neighbors import NearestNeighbors
 
+from optimization.classifiers import Classifiers
+
 from .base import UnsupervisedDriftDetector
 
 
@@ -26,12 +28,13 @@ class NNDVI(UnsupervisedDriftDetector):
     """
 
     def __init__(
-        self,
-        n_samples: int = 100,
-        k_neighbors: int = 30,
-        n_permutations: int = 500,
-        significance_level: float = 0.01,
-        seed: Optional[int] = None,
+            self,
+            n_samples: int = 100,
+            k_neighbors: int = 30,
+            n_permutations: int = 500,
+            significance_level: float = 0.01,
+            seed: Optional[int] = None,
+            recent_samples_size: int = 500
     ):
         """
         Initialize a new NNDVI concept drift detector.
@@ -41,7 +44,7 @@ class NNDVI(UnsupervisedDriftDetector):
         :param n_permutations: the number of permutations used in the statistical test
         :param significance_level: the significance_level that determines the drift threshold
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.n_samples = n_samples
         self.reference_window = deque(maxlen=self.n_samples)
         self.sliding_window = deque(maxlen=self.n_samples)
@@ -50,17 +53,17 @@ class NNDVI(UnsupervisedDriftDetector):
         self.significance_level = significance_level
         self.rng = np.random.default_rng(self.seed)
 
-    def update(self, features) -> bool:
+    def update(self, data) -> bool:
         """
         Update the drift detector with a new data and determine if a concept drift occured.
 
-        :param features: the data
+        :param data: the data
         :returns: True if a concept drift occurred, else False
         """
-        features = np.fromiter(features.values(), dtype=float)
-        self.sliding_window.append(features)
+        data = np.fromiter(data.values(), dtype=float)
+        self.sliding_window.append(data)
         if len(self.reference_window) < self.n_samples:
-            self.reference_window.append(features)
+            self.reference_window.append(data)
         elif self._detect_drift():
             self.reference_window = self.sliding_window.copy()
             return True
@@ -73,7 +76,8 @@ class NNDVI(UnsupervisedDriftDetector):
         :returns: True if a concept drift occurred, else False
         """
         # data = self._create_data_set()
-        data = np.concatenate((np.array(self.reference_window), np.array(self.sliding_window)))
+        data = np.concatenate(
+            (np.array(self.reference_window), np.array(self.sliding_window)))
         particle_matrix = self._get_particle_matrix(data)
         reference_indices, sliding_indices = self._get_indices(len(data))
         distance = self._get_nnps_distance(
@@ -88,7 +92,8 @@ class NNDVI(UnsupervisedDriftDetector):
                 self._get_nnps_distance(particle_matrix, first_set, second_set)
             )
         threshold = norm.ppf(
-            1 - self.significance_level, loc=np.mean(distances), scale=np.std(distances)
+            1 - self.significance_level, loc=np.mean(distances),
+            scale=np.std(distances)
         )
         return distance > threshold
 
@@ -115,7 +120,7 @@ class NNDVI(UnsupervisedDriftDetector):
         return first_set, second_set
 
     def _get_permutation(
-        self, first_set: np.array, second_set: np.array
+            self, first_set: np.array, second_set: np.array
     ) -> Tuple[np.array, np.array]:
         """
         Permute the given index arrays for a Monte Carlo permutation test.
@@ -137,7 +142,8 @@ class NNDVI(UnsupervisedDriftDetector):
         """
         neighbors = NearestNeighbors(
             n_neighbors=self.k_neighbors
-            + 1,  # add one because the datapoint itself is included in the subsequent fit
+                        + 1,
+            # add one because the datapoint itself is included in the subsequent fit
             algorithm="kd_tree",
         )
         neighbors.fit(data)
@@ -152,7 +158,8 @@ class NNDVI(UnsupervisedDriftDetector):
 
     @staticmethod
     def _get_nnps_distance(
-        particle_matrix: np.ndarray, first_set: Iterable, second_set: Iterable
+            particle_matrix: np.ndarray, first_set: Iterable,
+            second_set: Iterable
     ) -> float:
         """
         Compute and get the distance between the reference window's particles and the sliding
@@ -175,3 +182,6 @@ class NNDVI(UnsupervisedDriftDetector):
             / (first_particles + second_particles)
         ) / (len(particle_matrix))
         return distance
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

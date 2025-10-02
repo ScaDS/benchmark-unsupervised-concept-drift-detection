@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 from .base import UnsupervisedDriftDetector
 
 
-class DiscriminativeDriftDetector2019(UnsupervisedDriftDetector):
+class D3(UnsupervisedDriftDetector):
     """
     Discriminative Drift Detector (D3) detects concept drift by attempting to discern reference samples from recent
     samples. If the classifier can successfully discern the two data windows, there must be a difference between them
@@ -24,10 +24,11 @@ class DiscriminativeDriftDetector2019(UnsupervisedDriftDetector):
 
     def __init__(
         self,
-        n_reference_samples: int = 100,
-        recent_samples_proportion: float = 0.1,
-        threshold: float = 0.7,
+        n_reference_samples: int = 500,
+        recent_samples_proportion: float = 1,
+        threshold: float = 0.8,
         seed: Optional[int] = None,
+        recent_samples_size: int = 500
     ):
         """
         Init new D3 instance.
@@ -37,7 +38,7 @@ class DiscriminativeDriftDetector2019(UnsupervisedDriftDetector):
             number of data used to represent current concept
         :param threshold: the threshold above which two concepts can be reliably discerned and a drift is signalled
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.data = []
         self.n_reference_samples = n_reference_samples
         self.recent_samples_proportion = recent_samples_proportion
@@ -45,16 +46,16 @@ class DiscriminativeDriftDetector2019(UnsupervisedDriftDetector):
         self.threshold = threshold
         self.kfold = StratifiedKFold(n_splits=2, shuffle=True, random_state=self.seed)
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the most recent observation and detect if a drift occurred.
 
-        :param features: the features
+        :param data: the features
         :returns: True if a drift occurred else False
         """
-        features = np.fromiter(features.values(), dtype=float)
+        data = np.fromiter(data.values(), dtype=float)
         if len(self.data) != self.n_samples:
-            self.data.append(features)
+            self.data.append(data)
         else:
             if self._detect_drift():
                 self.data = self.data[self.n_reference_samples :]
@@ -103,3 +104,6 @@ class DiscriminativeDriftDetector2019(UnsupervisedDriftDetector):
                 :, 1
             ]
         return predictions
+    
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

@@ -7,7 +7,7 @@ from scipy.special import betaln
 from .base import UnsupervisedDriftDetector
 
 
-class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
+class BNDM(UnsupervisedDriftDetector):
     """
     Bayesian Nonparametric Drift Detection (BNDM) detects concept drifts by performing a Polya tree hypothesis test on
     each feature individually. The test determines the similarity of two samples by recursive comparisons of their
@@ -19,12 +19,13 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
     """
 
     def __init__(
-        self,
-        n_samples: int,
-        const: float = 1.0,
-        threshold: float = 0.5,
-        max_depth: int = 3,
-        seed=None,
+            self,
+            n_samples: int = 50,
+            const: float = 1.0,
+            threshold: float = 0.5,
+            max_depth: int = 3,
+            seed=None,
+            recent_samples_size: int = 500
     ):
         """
         Initialize a new BayesianNonparametricDetectionMethod.
@@ -34,7 +35,7 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         :param threshold: the threshold of the drift detection
         :param max_depth: the max depth of the Polya tree
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.n_samples = n_samples
         self.data_window = deque(maxlen=2 * n_samples)
         self.const = const
@@ -42,20 +43,21 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         self.max_depth = max_depth
         self.distribution = stats.norm(loc=0, scale=1)
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the most recent observation and determine if a drift occurred.
 
-        :param features: the features
+        :param data: the features
         :returns: True if a drift was detected else False
         """
-        features = np.fromiter(features.values(), dtype=float)
-        self.data_window.append(features)
+        data = np.fromiter(data.values(), dtype=float)
+        self.data_window.append(data)
         if len(self.data_window) == self.data_window.maxlen:
-            data = np.array(self.data_window)
-            for i in range(len(features)):
+            #data = np.array(self.data_window)
+            for i in range(len(data)):
                 sample_one, sample_two = self._get_samples(feature_index=i)
-                log_odd_ratios = self.polya_tree_test(sample_one, sample_two, 0)
+                log_odd_ratios = self.polya_tree_test(sample_one, sample_two,
+                                                      0)
                 test_statistic = 1 / (1 + np.exp(-log_odd_ratios))
                 if test_statistic < self.threshold:
                     self.reset()
@@ -63,11 +65,11 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         return False
 
     def polya_tree_test(
-        self,
-        sample_one: np.array,
-        sample_two: np.array,
-        level: int,
-        partition: str = "",
+            self,
+            sample_one: np.array,
+            sample_two: np.array,
+            level: int,
+            partition: str = "",
     ) -> float:
         """
         Perform a Polya tree two-sample test with the given samples by partitioning the data to estimate data
@@ -100,9 +102,9 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
             alpha + n_left, alpha + n_right
         )
         contribution_den = (
-            -2 * betaln(alpha, alpha)
-            + betaln(alpha + n_one_left, alpha + n_one_right)
-            + betaln(alpha + n_two_left, alpha + n_two_right)
+                -2 * betaln(alpha, alpha)
+                + betaln(alpha + n_one_left, alpha + n_one_right)
+                + betaln(alpha + n_two_left, alpha + n_two_right)
         )
         contribution = contribution_num - contribution_den
         contribution_left = self.polya_tree_test(
@@ -113,7 +115,8 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         )
         return contribution + contribution_left + contribution_right
 
-    def _get_interval_count(self, sample_one, sample_two, partition) -> (int, int):
+    def _get_interval_count(self, sample_one, sample_two, partition) -> (
+    int, int):
         """
         Count the number of samples in the provided partition.
 
@@ -123,8 +126,10 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         :returns: a tuple containing the number of respective items of each sample in the interval
         """
         interval = self._get_interval(partition)
-        n_one = np.sum((sample_one > interval[0]) & (sample_one <= interval[1]))
-        n_two = np.sum((sample_two > interval[0]) & (sample_two <= interval[1]))
+        n_one = np.sum(
+            (sample_one > interval[0]) & (sample_one <= interval[1]))
+        n_two = np.sum(
+            (sample_two > interval[0]) & (sample_two <= interval[1]))
         return n_one, n_two
 
     def _get_interval(self, partition) -> (float, float):
@@ -154,7 +159,7 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         sample_one = normalized_data_slice[: self.n_samples]
         sample_two = normalized_data_slice[self.n_samples:]
         return sample_one, sample_two
-    
+
     @staticmethod
     def _normalize(data):
         """
@@ -175,3 +180,6 @@ class BayesianNonparametricDetectionMethod(UnsupervisedDriftDetector):
         Reset the drift detector by deleting the reference data and recent data.
         """
         self.data_window = deque(maxlen=2 * self.n_samples)
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

@@ -7,7 +7,7 @@ import numpy as np
 from .base import UnsupervisedDriftDetector
 
 
-class ImageBasedDriftDetector(UnsupervisedDriftDetector):
+class IBDD(UnsupervisedDriftDetector):
     """
     Image-Based Drift Detector (IBBD) detects concept drifts by calculating the mean squared deviation of the reference
     data window and the recent data window. If the deviation exceeds thresholds, a drift is signalled. The thresholds
@@ -20,12 +20,13 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
     """
 
     def __init__(
-        self,
-        n_samples: int = 300,
-        n_consecutive_deviations: int = 1,
-        n_permutations: int = 20,
-        update_interval: int = 50,
-        seed: Optional[int] = None,
+            self,
+            n_samples: int = 300,
+            n_consecutive_deviations: int = 1,
+            n_permutations: int = 20,
+            update_interval: int = 50,
+            seed: Optional[int] = None,
+            recent_samples_size: int = 500
     ):
         """
         Init a new IBDD instance.
@@ -36,7 +37,7 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
         :param n_permutations: the number of times the reference data is permuted to determine initial thresholds
         :param update_interval: the number of time steps between each update of the thresholds
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.n_samples = n_samples
         self.reference_data = []
         self.recent_data = deque(maxlen=n_samples)
@@ -51,23 +52,23 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
         self.last_threshold_update = 0
         self.rng = np.random.default_rng(self.seed)
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the given features.
 
-        :param features: the features
+        :param data: the features
         :return: True if a drift occurred, else False
         """
-        features = np.fromiter(features.values(), dtype=float)
+        data = np.fromiter(data.values(), dtype=float)
         drift = False
         if self.upper_threshold is None and self.lower_threshold is None:
-            self.reference_data.append(features)
+            self.reference_data.append(data)
             if len(self.reference_data) == self.n_samples:
                 self._calculate_initial_thresholds()
-        self.recent_data.append(features)
+        self.recent_data.append(data)
         if (
-            len(self.reference_data) == self.n_samples
-            and len(self.recent_data) == self.n_samples
+                len(self.reference_data) == self.n_samples
+                and len(self.recent_data) == self.n_samples
         ):
             deviation = self._calculate_mean_squared_deviation(
                 np.array(self.recent_data)
@@ -90,7 +91,8 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
         evaluation_values = np.fromiter(
             itertools.islice(
                 self.recent_deviations,
-                len(self.recent_deviations) - (self.n_consecutive_deviations + 1),
+                len(self.recent_deviations) - (
+                            self.n_consecutive_deviations + 1),
                 len(self.recent_deviations),
             ),
             dtype=float,
@@ -98,13 +100,15 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
         if np.all(evaluation_values >= self.upper_threshold):
             self.upper_threshold = deviation + np.std(self.recent_deviations)
             self.lower_threshold = deviation - np.mean(self.threshold_diffs)
-            self.threshold_diffs.append(self.upper_threshold - self.lower_threshold)
+            self.threshold_diffs.append(
+                self.upper_threshold - self.lower_threshold)
             self.last_threshold_update = self.time_step
             return True
         elif np.all(evaluation_values <= self.lower_threshold):
             self.lower_threshold = deviation - np.std(self.recent_deviations)
             self.upper_threshold = deviation + np.mean(self.threshold_diffs)
-            self.threshold_diffs.append(self.upper_threshold - self.lower_threshold)
+            self.threshold_diffs.append(
+                self.upper_threshold - self.lower_threshold)
             self.last_threshold_update = self.time_step
             return True
         return False
@@ -135,7 +139,8 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
         self.upper_threshold = np.mean(self.recent_deviations) + 2 * np.std(
             self.recent_deviations
         )
-        self.threshold_diffs.append(self.upper_threshold - self.lower_threshold)
+        self.threshold_diffs.append(
+            self.upper_threshold - self.lower_threshold)
         self.last_threshold_update = self.time_step
 
     def _calculate_initial_thresholds(self):
@@ -160,4 +165,8 @@ class ImageBasedDriftDetector(UnsupervisedDriftDetector):
         deviations = np.fromiter(self.recent_deviations, dtype=float)
         self.lower_threshold = np.mean(deviations) - 2 * np.std(deviations)
         self.upper_threshold = np.mean(deviations) + 2 * np.std(deviations)
-        self.threshold_diffs.append(self.upper_threshold - self.lower_threshold)
+        self.threshold_diffs.append(
+            self.upper_threshold - self.lower_threshold)
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)

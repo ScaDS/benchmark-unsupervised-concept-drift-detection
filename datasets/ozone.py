@@ -13,7 +13,7 @@ class Ozone(base.FileDataset):
             n_samples=2_534,
             n_features=72,
             task=base.MULTI_CLF,
-            filename="ozone.csv",
+            filename="Ozone.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

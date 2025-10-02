@@ -1,17 +1,17 @@
 from datasets import (
-    Electricity,
-    InsectsAbruptBalanced,
-    InsectsGradualBalanced,
-    InsectsIncrementalAbruptBalanced,
-    InsectsIncrementalBalanced,
-    InsectsIncrementalReoccurringBalanced,
+    #Electricity,
+    #InsectsAbruptBalanced,
+    #InsectsGradualBalanced,
+    #InsectsIncrementalAbruptBalanced,
+    #InsectsIncrementalBalanced,
+    #InsectsIncrementalReoccurringBalanced,
     NOAAWeather,
     OutdoorObjects,
     PokerHand,
     Powersupply,
     RialtoBridgeTimelapse,
     SineClusters,
-    WaveformDrift2
+    #WaveformDrift2
 )
 from detectors import *
 from optimization.model_optimizer import ModelOptimizer
@@ -20,33 +20,22 @@ from optimization.parameter import Parameter
 
 class Configuration:
     streams = [
-        Electricity(),
-        InsectsAbruptBalanced(),
-        InsectsGradualBalanced(),
-        InsectsIncrementalAbruptBalanced(),
-        InsectsIncrementalBalanced(),
-        InsectsIncrementalReoccurringBalanced(),
+        #Electricity(),
+        #InsectsAbruptBalanced(),
+        #InsectsGradualBalanced(),
+        #InsectsIncrementalAbruptBalanced(),
+        #InsectsIncrementalBalanced(),
+        #InsectsIncrementalReoccurringBalanced(),
         NOAAWeather(),
         OutdoorObjects(),
         PokerHand(),
         Powersupply(),
         RialtoBridgeTimelapse(),
         SineClusters(drift_frequency=5000, stream_length=154_987, seed=531874),
-        WaveformDrift2(drift_frequency=5000, stream_length=154_987, seed=2401137),
+        #WaveformDrift2(drift_frequency=5000, stream_length=154_987, seed=2401137),
     ]
     n_training_samples = 1000
     models = [
-        ModelOptimizer(
-            base_model=BayesianNonparametricDetectionMethod,
-            parameters=[
-                Parameter("n_samples", values=[100, 250, 500, 1000]),
-                Parameter("const", values=[0.5, 1.0]),
-                Parameter("max_depth", values=[2, 3]),
-                Parameter("threshold", values=[0.45, 0.5, 0.55]),
-            ],
-            seeds=None,
-            n_runs=1,
-        ),
         ModelOptimizer(
             base_model=ClusteredStatisticalTestDriftDetectionMethod,
             parameters=[
@@ -57,6 +46,17 @@ class Configuration:
             ],
             seeds=None,
             n_runs=5,
+        ),
+        ModelOptimizer(
+            base_model=BayesianNonparametricDetectionMethod,
+            parameters=[
+                Parameter("n_samples", values=[100, 250, 500, 1000]),
+                Parameter("const", values=[0.5, 1.0]),
+                Parameter("max_depth", values=[2, 3]),
+                Parameter("threshold", values=[0.45, 0.5, 0.55]),
+            ],
+            seeds=None,
+            n_runs=1,
         ),
         ModelOptimizer(
             base_model=DiscriminativeDriftDetector2019,

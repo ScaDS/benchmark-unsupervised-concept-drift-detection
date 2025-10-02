@@ -13,7 +13,7 @@ class OutdoorObjects(base.FileDataset):
             n_samples=4_000,
             n_features=21,
             task=base.MULTI_CLF,
-            filename="outdoor.csv",
+            filename="Outdoor.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
 

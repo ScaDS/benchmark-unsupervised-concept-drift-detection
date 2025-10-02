@@ -5,6 +5,7 @@ import numpy as np
 def calculate_drift_metrics(
     known_drifts: List[Union[int, float]],
     detections: List[Union[int, float]],
+    stream_length: int = np.nan,
 ) -> Dict[str, float]:
     """
     Calculate four drift metrics from known drifts and the detected drifts. The four metrics are the
@@ -13,6 +14,8 @@ def calculate_drift_metrics(
 
     :param known_drifts: the known drifts
     :param detections: the detected drifts
+    :param stream_length: the length of the data stream, defaults to np.nan, used to estimate a lower bound of
+        mtfa if no false alarms were raised
     :returns: mtr, mtfa, mtd, mdr
     """
     detection_times = []
@@ -39,10 +42,13 @@ def calculate_drift_metrics(
     mtfa = (
         np.mean(np.array(false_detections[1:]) - np.array(false_detections[:-1]))
         if len(false_detections) > 1
-        else np.nan
+        else stream_length
     )
-    mtd = np.mean(detection_times) if len(detection_times) > 0 else np.nan
+    mtd = np.mean(detection_times) if len(detection_times) > 0 else np.inf
     mdr = 1 - len(detection_times) / len(known_drifts)
+    #print(mtfa)
+    #print(mdr)
+    #print(mtd)
     mtr = mtfa / mtd * (1 - mdr)
 
     return {"mtr": mtr, "mtfa": mtfa, "mtd": mtd, "mdr": mdr}

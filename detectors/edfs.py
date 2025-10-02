@@ -26,13 +26,14 @@ class EDFS(UnsupervisedDriftDetector):
     """
 
     def __init__(
-        self,
-        n_subspaces: int = 10,
-        feature_percentage: float = 0.1,
-        mode: EDFSMode = EDFSMode.RANDOM,
-        alpha: float = 0.005,
-        window_size: int = 100,
-        seed: Optional[int] = None,
+            self,
+            n_subspaces: int = 10,
+            feature_percentage: float = 0.1,
+            mode: EDFSMode = EDFSMode.RANDOM,
+            alpha: float = 0.005,
+            window_size: int = 100,
+            seed: Optional[int] = None,
+            recent_samples_size: int = 500
     ):
         """
         Init a new EDFS instance.
@@ -43,7 +44,7 @@ class EDFS(UnsupervisedDriftDetector):
         :param alpha: the probability of the test statistic of the Kolmogorov-Smirnov-test
         :param window_size: the size of the sliding window
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, recent_samples_size=recent_samples_size)
         self.mode = mode
         self.n_subspaces = n_subspaces
         self.feature_percentage = feature_percentage
@@ -54,18 +55,18 @@ class EDFS(UnsupervisedDriftDetector):
         self.window_size = window_size
         self.rng = np.random.default_rng(self.seed)
 
-    def update(self, features: dict) -> bool:
+    def update(self, data: dict) -> bool:
         """
         Update the detector with the given features.
 
-        :param features: the features
+        :param data: the features
         :return: True if a drift occurred, else False
         """
         if len(self.subspaces) == 0:
-            self.reset(features)
-        drift = self._detect_drift(features)
+            self.reset(data)
+        drift = self._detect_drift(data)
         if drift:
-            self.reset(features)
+            self.reset(data)
         return drift
 
     def _detect_drift(self, features: dict) -> bool:
@@ -89,13 +90,15 @@ class EDFS(UnsupervisedDriftDetector):
         Resets the feature subspaces using the method specified at initialization.
         """
         self.n_features = len(sample)
-        self.n_features_per_space = int(np.ceil(self.n_features * self.feature_percentage))
+        self.n_features_per_space = int(
+            np.ceil(self.n_features * self.feature_percentage))
         if self.mode is EDFSMode.RANDOM:
             self.__random_reset(sample)
         elif self.mode is EDFSMode.SUBSPACE_SELECTION:
             self.__subspace_selection_reset()
         else:
-            raise ValueError(f"Mode {self.mode} is not a mode supported by EDFS.")
+            raise ValueError(
+                f"Mode {self.mode} is not a mode supported by EDFS.")
 
     def __random_reset(self, sample):
         """
@@ -103,8 +106,11 @@ class EDFS(UnsupervisedDriftDetector):
         """
         self.subspaces = [
             {
-                feature: KolmogorovSmirnovDriftDetector(self.window_size, self.alpha)
-                for feature in self.rng.choice(list(sample.keys()), size=self.n_features_per_space, replace=False)
+                feature: KolmogorovSmirnovDriftDetector(self.window_size,
+                                                        self.alpha)
+                for feature in self.rng.choice(list(sample.keys()),
+                                               size=self.n_features_per_space,
+                                               replace=False)
             }
             for _ in range(self.n_subspaces)
         ]
@@ -113,3 +119,6 @@ class EDFS(UnsupervisedDriftDetector):
         raise NotImplementedError(
             "Feature subspace selection was not implemented, yet."
         )
+
+    def run_stream(self, stream, n_training_samples: int, classifier_path):
+        return super().run_stream(stream, n_training_samples, classifier_path)
