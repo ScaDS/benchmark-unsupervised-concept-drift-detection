@@ -103,8 +103,7 @@ pip install -r requirements.txt
 
 3. **Prepare datasets**
 ```bash
-# Datasets are included in datasets
-tar -xvzf files.tar.gz
+# Datasets can be downloaded from [USP DS Repository](https://sites.google.com/view/uspdsrepository) and extracted in `datasets/files`
 # Or download additional datasets if needed
 ```
 
