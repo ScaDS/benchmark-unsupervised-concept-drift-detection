@@ -31,7 +31,7 @@ This benchmark suite provides a systematic framework for evaluating and comparin
 ```
 benchmarkdd/
 ├── datasets/                    # Dataset definitions and loaders
-│   ├── files.tar.gz            # CSV data files to unpack
+│   ├── files/                  # CSV data files 
 │   └── *.py                    # Dataset classes (electricity.py, etc.)
 │
 ├── detectors/                   # Drift detector implementations
