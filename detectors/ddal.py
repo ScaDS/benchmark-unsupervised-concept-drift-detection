@@ -60,6 +60,9 @@ class DDAL(SemisupervisedDriftDetector, BatchDetector):
         self.current_density = 0.0
         self.amount_selected_instances = 0
         self.batch_size = batch_size
+        self._init_batch_size = batch_size
+        self._init_theta = theta
+        self._init_lambida = lambida
 
     def fixed_uncertainty(self, maximum_posteriori):
         selected = False
@@ -97,15 +100,16 @@ class DDAL(SemisupervisedDriftDetector, BatchDetector):
 
         return isDrift
 
-    def reset(self, batch_size: int = 500, theta: float = 0.95,
-              lambida: float = 0.95):
-        self.theta = theta
-        self.lambida = lambida
+    def reset(self, batch_size: int = None, theta: float = None,
+              lambida: float = None):
+        self.theta = theta if theta is not None else self._init_theta
+        self.lambida = lambida if lambida is not None else self._init_lambida
         self.max_density = sys.float_info.min
         self.min_density = sys.float_info.max
         self.current_density = 0.0
         self.amount_selected_instances = 0
-        self.batch_size = batch_size
+        self.batch_size = (batch_size if batch_size is not None
+                           else self._init_batch_size)
 
     def update(self, x) -> bool:
         """
