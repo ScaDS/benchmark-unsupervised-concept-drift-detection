@@ -1,4 +1,20 @@
-export PATH="/data/horse/ws/s4122485-compPerfDD/benchmark/dfki/benchmarkdd/OmniOpt/":$PATH
+################################################################################
+# Base Path Configuration
+################################################################################
+# Base path for the benchmark workspace. Override by exporting BASE_PATH before
+# sourcing this file or invoking any of the run_*.sh scripts, e.g.:
+#   export BASE_PATH=/path/to/benchmark
+BASE_PATH="${BASE_PATH:-/data/horse/ws/s4122485-compPerfDD/benchmark}"
+
+# Derived paths (override individually if needed)
+VENV_PATH="${VENV_PATH:-${BASE_PATH}/venv}"
+PROJECT_PATH="${PROJECT_PATH:-${BASE_PATH}/dfki/benchmarkdd}"
+RUNS_DIR="${RUNS_DIR:-${PROJECT_PATH}/runs}"
+OMNIOPT_PATH="${OMNIOPT_PATH:-${PROJECT_PATH}/OmniOpt}"
+
+export BASE_PATH VENV_PATH PROJECT_PATH RUNS_DIR OMNIOPT_PATH
+
+export PATH="${OMNIOPT_PATH}/:$PATH"
 export DONT_SEND_SIGNAL_BEFORE_END=1
 # Define parameters for different DDs, parameter_name:dtype:min:max
 CSDDM=("recent_samples_size:range:int:1 5000" "n_samples:range:int:1 5000" "confidence:choice:float:0.25,0.1,0.05,0.025,0.01,0.005,0.001" "feature_proportion:range:float:0.001 0.999" "n_clusters:range:int:1 50")

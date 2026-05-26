@@ -25,6 +25,12 @@
 ################################################################################
 
 ################################################################################
+# Load Benchmark Configuration (BASE_PATH, VENV_PATH, ...)
+################################################################################
+
+source benchmark_config.sh
+
+################################################################################
 # Configuration
 ################################################################################
 
@@ -134,7 +140,7 @@ for stream in "${streams[@]}"; do
             # Build run command based on environment
             if [ "$SLURM_AVAILABLE" = true ]; then
                 # SLURM environment - use module load and venv
-                run_program=$(echo -n "module load GCCcore/10.3.0 Python && source /data/horse/ws/s4122485-compPerfDD/benchmark/venv/bin/activate && python train_classifiers.py $stream $n_training_samples $n_val_samples $clf ${python_args_list[*]}" | base64 -w 0)
+                run_program=$(echo -n "module load GCCcore/10.3.0 Python && source ${VENV_PATH}/bin/activate && python train_classifiers.py $stream $n_training_samples $n_val_samples $clf ${python_args_list[*]}" | base64 -w 0)
             else
                 # Local machine - use python directly
                 run_program=$(echo -n "python train_classifiers.py $stream $n_training_samples $n_val_samples $clf ${python_args_list[*]}" | base64 -w 0)
@@ -165,7 +171,7 @@ for stream in "${streams[@]}"; do
             if [ "$SLURM_AVAILABLE" = true ]; then
                 # SLURM environment - use module load and venv
                 module load GCCcore/10.3.0 Python && \
-                source /data/horse/ws/s4122485-compPerfDD/benchmark/venv/bin/activate && \
+                source "${VENV_PATH}/bin/activate" && \
                 python train_classifiers.py "$stream" "$n_training_samples" "$n_val_samples" "$clf"
             else
                 # Local machine - use python directly

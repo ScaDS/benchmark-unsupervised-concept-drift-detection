@@ -254,7 +254,7 @@ for stream in "${!streamdds[@]}"; do
                 # Check if continuing from previous run or starting new
                 if [ "$4" = true ] || [ "$4" = True ] || [ "$4" = 1 ]; then
                     # Continue mode: find the most recent run directory
-                    highest_dir=$(ls -d /data/horse/ws/s4122485-compPerfDD/benchmark/dfki/benchmarkdd/runs/${experiment_name}/*/ 2>/dev/null | sort -V | tail -n 1)
+                    highest_dir=$(ls -d "${RUNS_DIR}/${experiment_name}"/*/ 2>/dev/null | sort -V | tail -n 1)
                     
                     if [ -z "$highest_dir" ]; then
                         echo "Warning: No previous run found for ${experiment_name}"
@@ -293,10 +293,10 @@ for stream in "${!streamdds[@]}"; do
                         # SLURM is available - use module load and venv activation
                         if [ "$MTR_MODE" = true ] || [ "$MTR_MODE" = True ] || [ "$MTR_MODE" = 1 ]; then
                             # MTR mode: Pass Runtime and MTR flags (2 arguments)
-                            run_program=$(echo -n "module load GCCcore/10.3.0 Python && source /data/horse/ws/s4122485-compPerfDD/benchmark/venv/bin/activate && python main.py $2 $MTR_MODE $stream $n_training_samples $clf $dd ${python_args_list[*]}" | base64 -w 0)
+                            run_program=$(echo -n "module load GCCcore/10.3.0 Python && source ${VENV_PATH}/bin/activate && python main.py $2 $MTR_MODE $stream $n_training_samples $clf $dd ${python_args_list[*]}" | base64 -w 0)
                         else
                             # Standard mode: Pass Accuracy, Runtime, ReqLabels flags (3 arguments)
-                            run_program=$(echo -n "module load GCCcore/10.3.0 Python && source /data/horse/ws/s4122485-compPerfDD/benchmark/venv/bin/activate && python main.py $1 $2 $3 $stream $n_training_samples $clf $dd ${python_args_list[*]}" | base64 -w 0)
+                            run_program=$(echo -n "module load GCCcore/10.3.0 Python && source ${VENV_PATH}/bin/activate && python main.py $1 $2 $3 $stream $n_training_samples $clf $dd ${python_args_list[*]}" | base64 -w 0)
                         fi
                     else
                         # Local machine - just use python directly (assumes python is in PATH)
