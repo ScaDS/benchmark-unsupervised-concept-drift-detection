@@ -235,6 +235,8 @@ def main():
     parser.add_argument('--timeout', type=int, default=7200, help='Timeout per experiment in seconds')
     parser.add_argument('--results-dir', type=str, default='all_benchmark_results', help='Directory containing benchmark results')
     parser.add_argument('--resume', action='store_true', help='Resume from existing results, skip already processed configs')
+    parser.add_argument('--detector', type=str, default=None, help='Only process specific detector')
+    parser.add_argument('--dataset', type=str, default=None, help='Only process specific dataset')
     args = parser.parse_args()
     
     # Create output directory
@@ -269,13 +271,19 @@ def main():
     all_results = []
     
     for csv_file in csv_files:
-        print(f"\nProcessing {csv_file}")
-        
-        # Extract detector and dataset from path
+        # Extract detector and dataset from path for filtering
         parts = csv_file.parts
         detector = parts[-3]
         dataset = parts[-2]
+        
+        # Filter by detector/dataset if specified
+        if args.detector and detector != args.detector:
+            continue
+        if args.dataset and dataset != args.dataset:
+            continue
+        
         filename = csv_file.name
+        print(f"\nProcessing {csv_file}")
         
         # Determine mode and flags from filename
         mode, flags = parse_mode_from_filename(filename)
@@ -390,7 +398,7 @@ def main():
                     success_rate = (successful_count / total_processed * 100) if total_processed > 0 else 0
                     
                     status = "✓" if accuracy_success else "✗"
-                    print(f"  [{total_processed}/{len(configs)}] {status} Success: {successful_count} ({success_rate:.1f}%) Failed: {failed_count}", end='\r')
+                    print(f"  [{total_processed}/{len(configs)}] {status} Success: {successful_count} ({success_rate:.1f}%) Failed: {failed_count}{' ' * 20}", end='\r')
                     
                 except Exception as e:
                     print(f"  Error processing config {idx}: {e}")
