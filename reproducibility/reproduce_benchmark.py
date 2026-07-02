@@ -227,8 +227,11 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
     
-    # Find all CSV files
-    results_dir = Path(args.results_dir)
+    # Find all CSV files (resolve path relative to script location)
+    script_dir = Path(__file__).parent
+    results_dir = script_dir / args.results_dir
+    if not results_dir.is_absolute():
+        results_dir = results_dir.resolve()
     csv_files = list(results_dir.glob('*/*/*.csv'))
     
     print(f"Found {len(csv_files)} CSV files to process")
