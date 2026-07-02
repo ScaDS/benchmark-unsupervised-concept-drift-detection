@@ -231,7 +231,7 @@ def main():
     parser = argparse.ArgumentParser(description='Reproduce benchmark results')
     parser.add_argument('--max-workers', type=int, default=4, help='Maximum number of parallel workers')
     parser.add_argument('--output-dir', type=str, default='reproducibility_results', help='Output directory for results')
-    parser.add_argument('--timeout', type=int, default=300, help='Timeout per experiment in seconds')
+    parser.add_argument('--timeout', type=int, default=7200, help='Timeout per experiment in seconds')
     parser.add_argument('--results-dir', type=str, default='all_benchmark_results', help='Directory containing benchmark results')
     parser.add_argument('--resume', action='store_true', help='Resume from existing results, skip already processed configs')
     args = parser.parse_args()
