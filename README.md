@@ -144,7 +144,7 @@ python main.py <Runtime> <MTR> <Dataset> <TrainSamples> <Classifier> <Detector> 
 
 ```bash
 # Run CSDDM on Electricity dataset, optimize for accuracy and runtime
-python main.py True True False Electricity 1600 HoeffdingTreeClassifier CSDDM recent_samples_size 1000 n_samples 500 confidence 0.05 feature_proportion 0.5 n_clusters 5
+python main.py True True False Electricity 2000 HoeffdingTreeClassifier CSDDM recent_samples_size 1000 n_samples 500 confidence 0.05 feature_proportion 0.5 n_clusters 5
 ```
 
 
