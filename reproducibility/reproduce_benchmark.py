@@ -133,7 +133,19 @@ def build_command(detector, dataset, mode, flags, config, n_training_samples=200
     for key, value in config.items():
         if not key.startswith('_'):
             cmd.append(str(key))
-            cmd.append(str(value))
+            
+            # Handle string parameters that are stored as str('...') in CSV
+            value_str = str(value)
+            if value_str.startswith("str('") and value_str.endswith("')"):
+                # Extract the actual string value from str('...')
+                actual_value = value_str[5:-2]  # Remove str(' and ')
+                cmd.append(actual_value)
+            elif value_str.startswith('str("') and value_str.endswith('")'):
+                # Extract the actual string value from str("...")
+                actual_value = value_str[5:-2]  # Remove str(" and ")
+                cmd.append(actual_value)
+            else:
+                cmd.append(value_str)
     
     return cmd
 
@@ -261,6 +273,10 @@ def main():
         # Prepare results for this experiment
         experiment_results = []
         
+        # Track statistics for this experiment
+        successful_count = 0
+        failed_count = 0
+        
         # Run configurations in parallel using separate processes
         with ProcessPoolExecutor(max_workers=args.max_workers) as executor:
             futures = {}
@@ -326,8 +342,17 @@ def main():
                     experiment_results.append(result_row)
                     all_results.append(result_row)
                     
+                    # Update statistics
+                    if accuracy_success:
+                        successful_count += 1
+                    else:
+                        failed_count += 1
+                    
+                    total_processed = successful_count + failed_count
+                    success_rate = (successful_count / total_processed * 100) if total_processed > 0 else 0
+                    
                     status = "✓" if accuracy_success else "✗"
-                    print(f"  [{idx+1}/{len(configs)}] {status} Config {idx}", end='\r')
+                    print(f"  [{total_processed}/{len(configs)}] {status} Success: {successful_count} ({success_rate:.1f}%) Failed: {failed_count}", end='\r')
                     
                 except Exception as e:
                     print(f"  Error processing config {idx}: {e}")
