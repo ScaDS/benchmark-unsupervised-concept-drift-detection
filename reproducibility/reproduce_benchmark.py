@@ -233,11 +233,27 @@ def main():
     parser.add_argument('--output-dir', type=str, default='reproducibility_results', help='Output directory for results')
     parser.add_argument('--timeout', type=int, default=300, help='Timeout per experiment in seconds')
     parser.add_argument('--results-dir', type=str, default='all_benchmark_results', help='Directory containing benchmark results')
+    parser.add_argument('--resume', action='store_true', help='Resume from existing results, skip already processed configs')
     args = parser.parse_args()
     
     # Create output directory
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
+    
+    # Load existing results if resuming
+    existing_results = {}
+    if args.resume:
+        combined_file = output_dir / "all_reproducibility_results.csv"
+        if combined_file.exists():
+            try:
+                existing_df = pd.read_csv(combined_file)
+                # Create a key for each existing result: detector_dataset_index
+                for _, row in existing_df.iterrows():
+                    key = f"{row['detector']}_{row['dataset']}_{row['index']}"
+                    existing_results[key] = row
+                print(f"Loaded {len(existing_results)} existing results for resume")
+            except Exception as e:
+                print(f"Warning: Could not load existing results: {e}")
     
     # Find all CSV files (resolve path relative to script location)
     script_dir = Path(__file__).parent
@@ -276,12 +292,33 @@ def main():
         # Track statistics for this experiment
         successful_count = 0
         failed_count = 0
+        skipped_count = 0
+        
+        # Filter out already processed configurations if resuming
+        configs_to_process = []
+        for i, config in enumerate(configs):
+            key = f"{detector}_{dataset}_{i}"
+            if args.resume and key in existing_results:
+                # Add existing result to experiment results
+                existing_row = existing_results[key]
+                experiment_results.append(existing_row)
+                all_results.append(existing_row)
+                skipped_count += 1
+            else:
+                configs_to_process.append((i, config))
+        
+        if skipped_count > 0:
+            print(f"  Skipped {skipped_count} already processed configurations")
+        
+        if not configs_to_process:
+            print(f"  All configurations already processed, skipping")
+            continue
         
         # Run configurations in parallel using separate processes
         with ProcessPoolExecutor(max_workers=args.max_workers) as executor:
             futures = {}
             
-            for i, config in enumerate(configs):
+            for i, config in configs_to_process:
                 cmd = build_command(detector, dataset, mode, flags, config)
                 future = executor.submit(run_single_experiment, cmd, args.timeout)
                 futures[future] = (i, config, cmd)
