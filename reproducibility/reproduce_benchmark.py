@@ -114,8 +114,8 @@ def build_command(detector, dataset, mode, flags, config, n_training_samples=200
     """
     cmd = ['python', 'main.py']
     
-    # Add flags
-    cmd.extend([str(flag).lower() for flag in flags])
+    # Add flags (use Python True/False, not lowercase)
+    cmd.extend([str(flag) for flag in flags])
     
     # Add dataset
     cmd.append(dataset)
