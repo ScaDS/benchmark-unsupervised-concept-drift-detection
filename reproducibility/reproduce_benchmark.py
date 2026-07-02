@@ -21,6 +21,7 @@ from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 import traceback
+import copy
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -321,7 +322,7 @@ def main():
             for i, config in configs_to_process:
                 cmd = build_command(detector, dataset, mode, flags, config)
                 future = executor.submit(run_single_experiment, cmd, args.timeout)
-                futures[future] = (i, config, cmd)
+                futures[future] = (i, copy.deepcopy(config), cmd)
             
             for future in as_completed(futures):
                 idx, config, cmd = futures[future]
@@ -329,10 +330,10 @@ def main():
                     success, metrics, error = future.result()
                     
                     # Extract original metrics
-                    original_accuracy = config.pop('_original_accuracy', None)
-                    original_runtime = config.pop('_original_runtime', None)
-                    original_reqlabels = config.pop('_original_reqlabels', None)
-                    original_mtr = config.pop('_original_mtr', None)
+                    original_accuracy = config.get('_original_accuracy', None)
+                    original_runtime = config.get('_original_runtime', None)
+                    original_reqlabels = config.get('_original_reqlabels', None)
+                    original_mtr = config.get('_original_mtr', None)
                     
                     # Determine success based on accuracy
                     reproduced_accuracy = metrics.get('accuracy', None) if metrics else None
