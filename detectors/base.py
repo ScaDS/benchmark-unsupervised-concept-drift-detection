@@ -3,8 +3,11 @@ from itertools import islice
 from abc import ABC, abstractmethod
 from typing import Optional
 import numpy as np
-import torch
 import random
+try:
+    import torch
+except ImportError:
+    torch = None
 from metrics.computational_metrics import computational_metrics
 
 
@@ -16,9 +19,10 @@ class DriftDetector(ABC):
             seed = int(1337)
         random.seed(seed)
         np.random.seed(seed)
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(seed)
+        if torch is not None:
+            torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(seed)
         self.seed = seed
         self.recent_samples = []
         self.recent_samples_size = recent_samples_size

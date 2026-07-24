@@ -8,7 +8,7 @@ from test.detectors.helper import get_simple_stream_drifts
 class D3Test(unittest.TestCase):
     def setUp(self) -> None:
         self.detector = D3(
-            n_reference_samples=10, recent_samples_proportion=1
+            n_reference_samples=10, recent_samples_proportion=1, threshold=0.75
         )
 
     def test_simple_detection(self):
