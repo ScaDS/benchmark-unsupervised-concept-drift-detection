@@ -151,6 +151,7 @@ pip install -r requirements.txt
 ```bash
 # Datasets can be downloaded from [USP DS Repository](https://sites.google.com/view/uspdsrepository) and extracted in `datasets/files`
 # Or download additional datasets if needed
+# Note: our initial results were obtained using a non-normalized ForestCovertype dataset. As of July 2026, the USP directory will contain a normalized version. To reproduce our results, we recommend using the non-normalized version of ForestCoverType. 
 ```
 
 4. **Train classifiers** (optional, pre-trained models included)
