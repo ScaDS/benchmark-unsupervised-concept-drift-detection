@@ -5,28 +5,30 @@ from metrics.metrics import get_metrics
 from detectors import DummyDDBL1, DummyDDBL2
 
 from datasets import (
-    Electricity,
+    #Electricity,
     #InsectsAbruptBalanced,
     #InsectsGradualBalanced,
     #InsectsIncrementalAbruptBalanced,
     #InsectsIncrementalBalanced,
     #InsectsIncrementalReoccurringBalanced,
-    NOAAWeather,
-    OutdoorObjects,
+    #NOAAWeather,
+    #OutdoorObjects,
     PokerHand,
     #Powersupply,
-    RialtoBridgeTimelapse,
+    #RialtoBridgeTimelapse,
     #SineClusters,
     #RAIN,
     #Keystroke,
     #TMDBalanced5s,
     #WaveformDrift2,
     #Chess,
-    SensorStream,
-    Ozone,
+    #SensorStream,
+    #Ozone,
     #Luxembourg,
     ForestCovertype,
-    GasSensor
+    GasSensor,
+    SineClustersPre,
+    WaveformPre,
 )
 
 n_training_samples = 2000

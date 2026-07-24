@@ -1,12 +1,12 @@
 import unittest
 
-from detectors import SemiParametricLogLikelihood
+from detectors import SPLL
 from test.detectors.helper import get_simple_random_stream_drifts
 
 
 class SPLLTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.detector = SemiParametricLogLikelihood(
+        self.detector = SPLL(
             n_samples=20, n_clusters=2, threshold=0.0005
         )
 

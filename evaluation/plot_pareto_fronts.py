@@ -263,7 +263,7 @@ def main():
                         help="Optional subset of datasets to plot.")
     args = parser.parse_args()
 
-    project_dir = Path(__file__).resolve().parent
+    project_dir = Path(__file__).resolve().parent.parent
     base_dir = (project_dir / args.results_dir).resolve()
     output_dir = (project_dir / args.output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)

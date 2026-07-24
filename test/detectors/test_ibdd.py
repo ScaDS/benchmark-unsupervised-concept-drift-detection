@@ -1,12 +1,12 @@
 import unittest
 
-from detectors import ImageBasedDriftDetector
+from detectors import IBDD
 from test.detectors.helper import get_simple_stream_drifts
 
 
 class IBDDTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.detector = ImageBasedDriftDetector(
+        self.detector = IBDD(
             n_samples=10, update_interval=5, n_permutations=10, seed=37
         )
 

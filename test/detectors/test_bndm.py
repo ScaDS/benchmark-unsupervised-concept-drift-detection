@@ -3,13 +3,13 @@ import unittest
 import numpy as np
 from scipy import stats
 
-from detectors import BayesianNonparametricDetectionMethod
+from detectors import BNDM
 from test.detectors.helper import get_simple_stream_drifts
 
 
 class PolyaTreeTestTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.bndm = BayesianNonparametricDetectionMethod(10)
+        self.bndm = BNDM(10)
 
     @staticmethod
     def normalize(sample_one, sample_two):
@@ -39,7 +39,7 @@ class PolyaTreeTestTest(unittest.TestCase):
 
 class GetIntervalTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.bndm = BayesianNonparametricDetectionMethod(0)
+        self.bndm = BNDM(0)
 
     def test_initial_partitions(self):
         lower, upper = self.bndm._get_interval("0")
@@ -66,7 +66,7 @@ class GetIntervalTest(unittest.TestCase):
 
 class GetSamplesTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.bndm = BayesianNonparametricDetectionMethod(10)
+        self.bndm = BNDM(10)
 
     @staticmethod
     def normalize(sample_one, sample_two):

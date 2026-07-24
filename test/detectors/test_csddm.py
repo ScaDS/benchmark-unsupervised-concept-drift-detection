@@ -1,13 +1,13 @@
 import unittest
 import warnings
 
-from detectors import ClusteredStatisticalTestDriftDetectionMethod
+from detectors import CSDDM
 from test.detectors.helper import get_simple_stream_drifts
 
 
 class CSDDMTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.detector = ClusteredStatisticalTestDriftDetectionMethod(
+        self.detector = CSDDM(
             n_samples=10, n_clusters=1, confidence=0.001
         )
 

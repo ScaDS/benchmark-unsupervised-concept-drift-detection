@@ -1,13 +1,13 @@
 import unittest
 import warnings
 
-from detectors import DiscriminativeDriftDetector2019
+from detectors import D3
 from test.detectors.helper import get_simple_stream_drifts
 
 
 class D3Test(unittest.TestCase):
     def setUp(self) -> None:
-        self.detector = DiscriminativeDriftDetector2019(
+        self.detector = D3(
             n_reference_samples=10, recent_samples_proportion=1
         )
 

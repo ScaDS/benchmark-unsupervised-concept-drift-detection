@@ -5,12 +5,14 @@ from datasets import (
     #InsectsIncrementalAbruptBalanced,
     #InsectsIncrementalBalanced,
     #InsectsIncrementalReoccurringBalanced,
-    NOAAWeather,
-    OutdoorObjects,
+    #NOAAWeather,
+    #OutdoorObjects,
     PokerHand,
-    Powersupply,
-    RialtoBridgeTimelapse,
-    SineClusters,
+    #Powersupply,
+    #RialtoBridgeTimelapse,
+    #SineClusters,
+    SineClustersPre,
+    WaveformPre,
     #WaveformDrift2
 )
 from detectors import *
@@ -26,18 +28,19 @@ class Configuration:
         #InsectsIncrementalAbruptBalanced(),
         #InsectsIncrementalBalanced(),
         #InsectsIncrementalReoccurringBalanced(),
-        NOAAWeather(),
-        OutdoorObjects(),
+        #NOAAWeather(),
+        #OutdoorObjects(),
         PokerHand(),
-        Powersupply(),
-        RialtoBridgeTimelapse(),
-        SineClusters(drift_frequency=5000, stream_length=154_987, seed=531874),
+        #Powersupply(),
+        #RialtoBridgeTimelapse(),
+        SineClustersPre(),
+        WaveformPre(),
         #WaveformDrift2(drift_frequency=5000, stream_length=154_987, seed=2401137),
     ]
     n_training_samples = 1000
     models = [
         ModelOptimizer(
-            base_model=ClusteredStatisticalTestDriftDetectionMethod,
+            base_model=CSDDM,
             parameters=[
                 Parameter("n_samples", values=[100, 250, 500, 1000]),
                 Parameter("confidence", values=[0.1, 0.01]),
@@ -48,7 +51,7 @@ class Configuration:
             n_runs=5,
         ),
         ModelOptimizer(
-            base_model=BayesianNonparametricDetectionMethod,
+            base_model=BNDM,
             parameters=[
                 Parameter("n_samples", values=[100, 250, 500, 1000]),
                 Parameter("const", values=[0.5, 1.0]),
@@ -59,7 +62,7 @@ class Configuration:
             n_runs=1,
         ),
         ModelOptimizer(
-            base_model=DiscriminativeDriftDetector2019,
+            base_model=D3,
             parameters=[
                 Parameter("n_reference_samples", values=[50, 125, 250, 500]),
                 Parameter("recent_samples_proportion", values=[0.1, 0.5, 1.0]),
@@ -69,7 +72,7 @@ class Configuration:
             n_runs=5,
         ),
         ModelOptimizer(
-            base_model=ImageBasedDriftDetector,
+            base_model=IBDD,
             parameters=[
                 Parameter("n_samples", values=[100, 250, 500, 1000]),
                 Parameter("n_permutations", values=[10, 20, 40]),
@@ -80,7 +83,7 @@ class Configuration:
             n_runs=5,
         ),
         ModelOptimizer(
-            base_model=OneClassDriftDetector,
+            base_model=OCDD,
             parameters=[
                 Parameter("n_samples", values=[100, 250, 500, 1000]),
                 Parameter("threshold", values=[0.2, 0.3, 0.4, 0.5]),
@@ -90,7 +93,7 @@ class Configuration:
             n_runs=1,
         ),
         ModelOptimizer(
-            base_model=SemiParametricLogLikelihood,
+            base_model=SPLL,
             parameters=[
                 Parameter("n_samples", values=[100, 250, 500, 1000]),
                 Parameter("n_clusters", values=[2, 3]),

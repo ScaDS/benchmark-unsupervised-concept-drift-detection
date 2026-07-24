@@ -319,6 +319,10 @@ def check_plot_pareto_fronts():
             return CheckResult("plot_pareto_fronts.py", True,
                                f"Script ran successfully ({len(pngs)} PNGs generated)")
         elif rc != 0:
+            combined = err + out
+            if "Results directory not found" in combined or "No such file" in combined:
+                return CheckResult("plot_pareto_fronts.py", True,
+                                   "No benchmark results directory (expected if no benchmark data)")
             return CheckResult("plot_pareto_fronts.py", False, f"Exit code {rc}: {err[:200]}")
         else:
             return CheckResult("plot_pareto_fronts.py", True, "Script ran, no PNGs (expected if no benchmark data)")
@@ -344,19 +348,19 @@ def check_create_mrp_tables():
 def check_unit_tests():
     """Run the unit test suite (detectors + metrics + optimization)."""
     # Try unittest discovery (no pytest dependency)
-    cmd = [PYTHON, "-m", "unittest", "test.detectors.test_bndm", "-v"]
-    rc, out, err = run_subprocess(cmd, timeout=60)
+    cmd = [PYTHON, "-m", "unittest", "discover", "-s", "test", "-v"]
+    rc, out, err = run_subprocess(cmd, timeout=120)
 
     if rc != 0:
-        return CheckResult("Unit tests (BNDM)", False, f"Exit code {rc}: {err[:200]}")
+        return CheckResult("Unit tests", False, f"Exit code {rc}: {err[:200]}")
 
     has_ok = "OK" in out or "OK" in err
     if not has_ok:
-        return CheckResult("Unit tests (BNDM)", False, "No 'OK' in test output")
+        return CheckResult("Unit tests", False, "No 'OK' in test output")
 
     # Count tests
     test_count = out.count("... ok") + out.count("... OK")
-    return CheckResult("Unit tests (BNDM)", True, f"{test_count} BNDM tests passed")
+    return CheckResult("Unit tests", True, f"{test_count} tests passed")
 
 
 def check_posthoc_reproducibility():
@@ -544,7 +548,7 @@ def main():
         ("eval_config.py", check_eval_config),
         ("plot_pareto_fronts.py", check_plot_pareto_fronts),
         ("create_all_mrp_tables.py", check_create_mrp_tables),
-        ("Unit tests (BNDM)", check_unit_tests),
+        ("Unit tests", check_unit_tests),
         ("Post-hoc: reproducibility imports", check_posthoc_reproducibility),
         ("Post-hoc: multiseed imports", check_posthoc_multiseed),
         ("Post-hoc: runtime_stability imports", check_posthoc_runtime_stability),

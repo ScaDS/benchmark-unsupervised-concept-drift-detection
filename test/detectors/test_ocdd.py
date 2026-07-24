@@ -2,13 +2,13 @@ import unittest
 
 from sklearn.svm import OneClassSVM
 
-from detectors import OneClassDriftDetector
+from detectors import OCDD
 from test.detectors.helper import get_simple_random_stream_drifts
 
 
 class OCDDTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.detector = OneClassDriftDetector(
+        self.detector = OCDD(
             n_samples=20,
             threshold=0.9,
             outlier_detector_class=OneClassSVM,
