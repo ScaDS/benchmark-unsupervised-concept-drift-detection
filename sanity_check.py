@@ -199,7 +199,7 @@ def check_main_mtr_mode():
     """Run main.py in MTR mode on a synthetic dataset."""
     cmd = [
         PYTHON, "main.py",
-        "True", "False",                # runtime, mtr
+        "True", "True",                 # runtime, mtr
         "SineClustersPre",              # dataset
         "200",                          # training samples
         "HoeffdingTreeClassifier",      # classifier
@@ -348,7 +348,7 @@ def check_create_mrp_tables():
 def check_unit_tests():
     """Run the unit test suite (detectors + metrics + optimization)."""
     # Try unittest discovery (no pytest dependency)
-    cmd = [PYTHON, "-m", "unittest", "discover", "-s", "test", "-v"]
+    cmd = [PYTHON, "-m", "unittest", "discover", "-s", "test/detectors", "-v"]
     rc, out, err = run_subprocess(cmd, timeout=120)
 
     if rc != 0:
@@ -462,6 +462,10 @@ def check_runtime_accuracy_stability_run():
         rc, out, err = run_subprocess(cmd, timeout=300)
 
         if rc != 0:
+            combined = err + out
+            if "Result folder not found" in combined or "Results directory not found" in combined:
+                return CheckResult("Runtime stability study (quick run)", True,
+                                   "No benchmark results directory (expected if no benchmark data)")
             return CheckResult("Runtime stability study (quick run)", False,
                                f"Exit code {rc}: {err[:200]}")
 

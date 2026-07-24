@@ -18,6 +18,8 @@ This benchmark suite provides a systematic framework for evaluating and comparin
 - **Automated hyperparameter tuning** for fair comparison
 - **Scalable execution** on both HPC clusters (SLURM) and local machines
 
+> **Online Results:** Benchmark results are explorable and presented via the interactive dashboard at **<https://imageseg.scads.de/omniax/conceptdrift/>**.
+
 ### Key Features
 
 - **Currently implemented detectors**: CSDDM, BNDM, D3, IBDD, OCDD, SPLL, UDetect, EDFS, NNDVI, UCDD, STUDD, DDAL, DAWIDD, IKS, HDDDM, PCACD, CDBD, SlidShaps, WindowKDE, CDLEEDS
