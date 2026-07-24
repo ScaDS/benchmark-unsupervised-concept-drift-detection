@@ -1,4 +1,4 @@
-# Computational Performance of Semi- and Unsupervised Concept Drift Detection: A Survey and Multiobjective Benchmark using Bayesian Optimization
+# Computational Performance of Unsupervised Concept Drift Detection: A Survey and Multiobjective Benchmark using Bayesian Optimization
 
 A comprehensive benchmark suite for evaluating drift detection algorithms on data streams using multi-objective Bayesian optimization.
 
