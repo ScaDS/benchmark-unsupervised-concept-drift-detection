@@ -34,6 +34,10 @@ import os
 import sys
 import ast
 import warnings
+import random
+
+import numpy as np
+import torch
 
 # Suppress warnings for performance
 warnings.filterwarnings("ignore")
@@ -74,6 +78,25 @@ def parse_expression(expr_str):
             raise ValueError(f"Invalid expression format: {expr_str}")
     except Exception as e:
         raise ValueError(f"Error parsing expression '{expr_str}': {e}")
+
+
+def extract_seed(expr_str):
+    node = ast.parse(expr_str, mode='eval').body
+    if isinstance(node, ast.Call):
+        for keyword in node.keywords:
+            if keyword.arg == 'seed':
+                return int(ast.literal_eval(keyword.value))
+    return None
+
+
+def seed_everything(seed):
+    if seed is None:
+        return
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def detect_mode(argv):
@@ -154,6 +177,7 @@ if __name__ == '__main__':
         detector_expr += "(" + args + ")"
 
     # Parse and instantiate components
+    seed_everything(extract_seed(detector_expr))
     dataset_string, stream = parse_expression(dataset_expr)
     classifier_string, classifier = parse_expression(classifier_expr)
     drift_detector_string, drift_detector = parse_expression(detector_expr)

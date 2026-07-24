@@ -14,11 +14,11 @@ class DriftDetector(ABC):
                  feature_id: int = None):
         if seed is None:
             seed = int(1337)
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            if torch.cuda.is_available():
-                torch.cuda.manual_seed_all(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
         self.seed = seed
         self.recent_samples = []
         self.recent_samples_size = recent_samples_size

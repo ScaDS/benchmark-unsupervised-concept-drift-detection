@@ -29,36 +29,64 @@ This benchmark suite provides a systematic framework for evaluating and comparin
 ## Repository Structure
 
 ```
-benchmarkdd/
+benchmark-unsupervised-concept-drift-detection/
 ├── datasets/                    # Dataset definitions and loaders
-│   ├── files/                  # CSV data files 
-│   └── *.py                    # Dataset classes (electricity.py, etc.)
+│   ├── files/                  # CSV/ARFF data files
+│   ├── convert_datasets.py     # ARFF → CSV conversion utility
+│   └── *.py                    # Dataset classes (electricity.py, noaa_weather.py, etc.)
 │
 ├── detectors/                   # Drift detector implementations
 │   ├── base.py                 # Base detector class
-│   └── *.py                    # Individual detectors (csddm.py, etc.)
+│   └── *.py                    # Individual detectors (csddm.py, bndm.py, etc.)
 │
-├── metrics/                      # Performance metrics
+├── metrics/                     # Performance metrics
 │   ├── drift.py                 # Drift detection metrics
 │   ├── computational_metrics.py # Runtime and memory metrics
-│   └── lift_per_drift.py        # Lift per drift calculation
+│   ├── lift_per_drift.py        # Lift per drift calculation
+│   ├── metrics.py               # Core metric aggregation
+│   └── requested_labels.py      # Requested labels metric
 │
-├── evaluation_notebooks/        # Analysis and visualization notebooks
-│   ├── evaluation_unified.ipynb        # Experiment status and data loading
-│   ├── evaluation_visualization.ipynb  # Performance visualization
-│   ├── prediction_analysis.ipynb       # Prediction pattern analysis
-│   ├── evaluation_radar_graphs.ipynb   # Multi-dimensional comparison
-│   └── eval_config.py                  # Shared configuration
+├── optimization/                # Hyperparameter optimization framework
+│   ├── classifiers.py           # Classifier definitions
+│   ├── config_generator.py      # OmniOpt configuration generation
+│   ├── logger.py                # Optimization logging
+│   ├── model_optimizer.py       # Model optimization logic
+│   └── parameter.py             # Parameter definitions
+│
+├── evaluation/                  # Experiment tracking and final output generation
+│   ├── eval_config.py                  # Shared configuration for notebooks
+│   ├── evaluation_unified.ipynb        # Experiment status and completion tracking
+│   ├── evaluation_visualization.ipynb  # Performance visualization (Pareto fronts, heatmaps)
+│   ├── prediction_analysis.ipynb       # Prediction pattern and ensemble analysis
+│   ├── plot_pareto_fronts.py           # Final Pareto-front plot generation → pareto_fronts/
+│   ├── create_all_mrp_tables.py        # Final MRP runtime table generation (LaTeX)
+│   └── pareto_fronts/                  # Generated Pareto-front PNGs
+│
+├── posthoc_analysis/            # Post-hoc stability and reproducibility studies
+│   ├── reproducibility/        # Re-run all benchmark configs and compare
+│   │   ├── reproduce_benchmark.py       # Main reproduction runner
+│   │   ├── submit_jobs.py              # SLURM job submission
+│   │   ├── run_reproduction.sbatch     # SLURM batch template
+│   │   └── analyze_reproducibility.py  # Reproducibility analysis
+│   ├── multiseed/              # Multi-seed stability (10 seeds, cross-seed correlations)
+│   │   ├── multi_seed_analysis.py           # Main multi-seed runner
+│   │   ├── submit_multi_seed_jobs.py        # SLURM job submission
+│   │   ├── run_multi_seed.sbatch            # SLURM batch template
+│   │   ├── analyze_multiseed_reproducibility.py  # Multi-seed stability analysis
+│   │   └── show_summary_correlations.py    # Cross-seed correlation summary
+│   └── runtime_stability/      # Runtime + accuracy variance over repeated runs
+│       ├── runtime_accuracy_stability_study.py      # Main stability runner
+│       ├── submit_runtime_accuracy_stability_jobs.py # SLURM job submission
+│       ├── run_runtime_accuracy_stability_study.sbatch # SLURM batch template
+│       └── summarize_stability.py                    # Stability summary
 │
 ├── model/                       # Pre-trained classifier models
 │   └── HoeffdingTreeClassifier/ # Hoeffding Tree models
 │
 ├── results/                     # Experiment results
-│   ├── baselines/              # Baseline results
-│   └── omniopt_results/        # OmniOpt optimization results
-│
-├── runs/                        # Active experiment runs (created by OmniOpt)
-│   └── [detector]_[dataset]_[classifier]_[metrics]/
+│   ├── all_benchmark_results/  # OmniOpt optimization results (per detector/dataset)
+│   ├── archive/                # Archived results (omniopt_results.tar.gz)
+│   └── baseline_results.tar.gz # Baseline results archive
 │
 ├── test/                        # Unit and integration tests
 │
@@ -66,14 +94,30 @@ benchmarkdd/
 ├── train_classifiers.py         # Classifier training
 ├── compute_baselines.py         # Baseline computation
 ├── config.py                    # Global configuration
+├── runner.py                    # Batch experiment runner
+├── sanity_check.py              # Verify all repository functionalities work
 ├── requirements.txt             # Python dependencies
 │
 ├── run_stream_detector_optimization.sh     # Main benchmark script
 ├── run_stream_detector_optimization.sbatch # SLURM batch script
 ├── run_train_classifiers.sh              # Classifier training script
+├── run_train_classifiers.sbatch          # SLURM batch script
 ├── run_baselines.sh                      # Baseline computation script
+├── run_baselines.sbatch                  # SLURM batch script
 └── benchmark_config.sh                   # Benchmark configuration
 ```
+
+## Sanity Check
+
+A sanity check script is provided to verify that all functionalities of the repository are working correctly. It briefly exercises each component (imports, dataset loading, main runner in both modes, baseline computation, classifier training, evaluation scripts, post-hoc analysis scripts, unit tests, and configuration) and reports which checks pass or fail.
+
+```bash
+python sanity_check.py
+```
+
+The script runs each check with a small subset of data and short timeouts. All 16 checks should pass on a properly configured installation.
+
+> **Note:** The sanity check runs entirely in the current allocation (or local machine) and does **not** submit any SLURM jobs. The `.sbatch` scripts referenced in the post-hoc analysis sections are HPC-cluster-specific and are only validated for importability and CLI correctness here. To actually launch cluster jobs, use the respective `submit_*.py` scripts on a SLURM-enabled environment.
 
 ## Getting Started
 
@@ -88,7 +132,7 @@ benchmarkdd/
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd benchmarkdd
+cd benchmark-unsupervised-concept-drift-detection
 ```
 
 2. **Install dependencies**
@@ -247,12 +291,12 @@ https://imageseg.scads.de/omniax/tutorials
 
 ## Analyzing Results
 
-### Using Jupyter Notebooks
+### Exploratory Notebooks
 
-Navigate to `evaluation_notebooks/` for comprehensive analysis:
+The `evaluation/` directory contains Jupyter notebooks for tracking experiment progress and exploring results interactively during and after benchmark runs:
 
 ```bash
-cd evaluation_notebooks
+cd evaluation
 jupyter notebook
 ```
 
@@ -273,6 +317,27 @@ jupyter notebook
    - Time-series visualization of predictions
    - Ensemble analysis
    - Minimal detector set identification
+
+These notebooks share configuration (dataset lists, detector names, color schemes, result-loading utilities) via `eval_config.py`.
+
+### Final Output Generation
+
+After the benchmark is complete, two standalone scripts produce the definitive, reproducible outputs:
+
+- **`plot_pareto_fronts.py`** - Generates Pareto-front plots (accuracy vs. runtime) per dataset → `evaluation/pareto_fronts/`
+- **`create_all_mrp_tables.py`** - Reproduces all MRP runtime tables from benchmark results and optionally generates LaTeX output
+
+### Post-Hoc Analysis
+
+The `posthoc_analysis/` directory contains three independent post-hoc experiment types for assessing the stability and reproducibility of benchmark results:
+
+1. **Reproducibility** (`posthoc_analysis/reproducibility/`) - Re-run all configurations from `results/all_benchmark_results/` and compare against the original OmniOpt results.
+
+2. **Multi-Seed Stability** (`posthoc_analysis/multiseed/`) - Run each configuration with 10 different random seeds and compute cross-seed correlations for accuracy, runtime, and hypervolume.
+
+3. **Runtime + Accuracy Stability** (`posthoc_analysis/runtime_stability/`) - Re-execute sampled configurations multiple times to measure runtime and accuracy variance.
+
+Each subdirectory contains its own SLURM job submission scripts and analysis tools.
 
 ## Performance Metrics
 

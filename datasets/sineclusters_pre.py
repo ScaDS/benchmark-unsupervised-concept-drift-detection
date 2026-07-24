@@ -13,11 +13,11 @@ class SineClustersPre(base.FileDataset):
             n_samples=10000,
             n_features=4,
             task=base.MULTI_CLF,
-            filename="output.csv",
+            filename="sineclusters.csv",
         )
         self.full_path = path.join(directory_path, self.filename)
         self.drifts=[]
-        with open("datasets/files/output_drifts.csv", 'r') as f:
+        with open("datasets/files/sineclusters_drifts.csv", 'r') as f:
             self.drifts = [int(line.strip()) for line in f]
 
     def __iter__(self):

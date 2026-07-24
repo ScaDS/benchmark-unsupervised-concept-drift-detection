@@ -1,6 +1,6 @@
 #from .airlines import Airlines
-from .chess import Chess
-from .electricity import Electricity
+#from .chess import Chess
+#from .electricity import Electricity
 from .forest_covertype import ForestCovertype
 from .gas_sensor import GasSensor
 '''
@@ -17,18 +17,18 @@ from .insects import (
     InsectsIncrementalReoccurringBalanced,
 )
 '''
-from .intrusion_detection import IntrusionDetection
-from .keystroke import Keystroke
-from .luxembourg import Luxembourg
-from .noaa_weather import NOAAWeather
-from .outdoor_objects import OutdoorObjects
-from .ozone import Ozone
+#from .intrusion_detection import IntrusionDetection
+#from .keystroke import Keystroke
+#from .luxembourg import Luxembourg
+#from .noaa_weather import NOAAWeather
+#from .outdoor_objects import OutdoorObjects
+#from .ozone import Ozone
 from .poker_hand import PokerHand
-from .powersupply import Powersupply
-from .rialto_bridge_timelapse import RialtoBridgeTimelapse
-from .sensor_stream import SensorStream
-from .sine_clusters import SineClusters
-from .sineclusters_pre import SineClustersPre
-from .waveform_drift2 import WaveformDrift2
-from .tmdBalanced5s import TMDBalanced5s
-from .waveform_pre import WaveformPre
+#from .powersupply import Powersupply
+#from .rialto_bridge_timelapse import RialtoBridgeTimelapse
+#from .sensor_stream import SensorStream
+#from .sine_clusters import SineClusters
+#from .sineclusters_pre import SineClustersPre
+#from .waveform_drift2 import WaveformDrift2
+#from .tmdBalanced5s import TMDBalanced5s
+#from .waveform_pre import WaveformPre
